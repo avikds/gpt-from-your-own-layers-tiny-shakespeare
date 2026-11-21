@@ -374,8 +374,33 @@ class FeedForward(nn.Module):
         # Apply the feed-forward network to the input.
         return self.net(x)
 
-# Step 11 - LayerNorm (not yet solved)
-# TODO: implement
+# Step 11 - LayerNorm
+class LayerNorm(nn.Module):
+    def __init__(self, dim, eps=1e-5):
+        """Learnable gamma (ones) and beta (zeros) of shape (dim,)."""
+        super().__init__()
+
+        # Learnable scaling and shifting parameters.
+        self.gamma = nn.Parameter(torch.ones(dim))
+        self.beta = nn.Parameter(torch.zeros(dim))
+
+        # Small epsilon value for numerical stability.
+        self.eps = eps
+
+    def forward(self, x):
+        """Normalize each vector along the last dimension, then scale and shift."""
+
+        # Calculate the mean along the last dimension.
+        mean = x.mean(dim=-1, keepdim=True)
+
+        # Calculate biased variance (divide by dim).
+        var = x.var(dim=-1, unbiased=False, keepdim=True)
+
+        # Normalize the input using the mean and variance.
+        xhat = (x - mean) / torch.sqrt(var + self.eps)
+
+        # Apply learnable scaling and shifting.
+        return self.gamma * xhat + self.beta
 
 # Step 12 - Block (not yet solved)
 # TODO: implement

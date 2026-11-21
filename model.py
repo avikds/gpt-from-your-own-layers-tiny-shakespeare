@@ -74,8 +74,40 @@ def get_batch(data, block_size, batch_size, generator=None):
 
     return x, y
 
-# Step 3 - BigramLanguageModel (not yet solved)
-# TODO: implement
+# Step 3 - BigramLanguageModel
+import torch.nn as nn
+import torch.nn.functional as F
+
+
+class BigramLanguageModel(nn.Module):
+    def __init__(self, vocab_size):
+        """One embedding table: row i holds the logits for the token after token i."""
+        super().__init__()
+
+        # Each token ID maps directly to logits over the entire vocabulary.
+        self.token_embedding_table = nn.Embedding(vocab_size, vocab_size)
+
+    def forward(self, idx, targets=None):
+        """Return (logits of shape (B, T, vocab_size), loss or None)."""
+
+        # Look up the logits corresponding to each input token.
+        # Input shape: (B, T)
+        # Output shape: (B, T, vocab_size)
+        logits = self.token_embedding_table(idx)
+
+        loss = None
+
+        # Calculate cross-entropy loss when target tokens are provided.
+        if targets is not None:
+            B, T, C = logits.shape
+
+            # Flatten logits and targets for cross-entropy calculation.
+            logits_flat = logits.reshape(B * T, C)
+            targets_flat = targets.reshape(B * T)
+
+            loss = F.cross_entropy(logits_flat, targets_flat)
+
+        return logits, loss
 
 # Step 4 - generate (not yet solved)
 # TODO: implement

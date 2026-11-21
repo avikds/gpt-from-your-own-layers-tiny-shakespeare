@@ -254,8 +254,61 @@ def average_past(x):
 
     return out
 
-# Step 8 - Head (not yet solved)
-# TODO: implement
+# Step 8 - Head
+class Head(nn.Module):
+    def __init__(self, n_embd, head_size, block_size, dropout=0.0):
+        """Key, query and value projections, a registered tril buffer, and dropout on the attention weights."""
+        super().__init__()
+
+        # Linear projections for keys, queries, and values.
+        # Bias is disabled as specified.
+        self.key = nn.Linear(n_embd, head_size, bias=False)
+        self.query = nn.Linear(n_embd, head_size, bias=False)
+        self.value = nn.Linear(n_embd, head_size, bias=False)
+
+        # Register a lower-triangular causal mask.
+        # This ensures that each token can only attend to itself
+        # and the tokens appearing before it.
+        self.register_buffer(
+            "tril",
+            torch.tril(torch.ones(block_size, block_size))
+        )
+
+        # Dropout applied to the attention weights.
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self, x):
+        """(B, T, n_embd) -> (B, T, head_size): scaled, causally masked attention."""
+
+        # Get batch size, sequence length, and embedding dimensions.
+        B, T, C = x.shape
+
+        # Generate query, key, and value representations.
+        k = self.key(x)
+        q = self.query(x)
+        v = self.value(x)
+
+        # Calculate scaled dot-product attention scores.
+        # Shape: (B, T, T)
+        scores = q @ k.transpose(-2, -1) * (k.size(-1) ** -0.5)
+
+        # Apply the causal mask to prevent attending to future positions.
+        scores = scores.masked_fill(
+            self.tril[:T, :T] == 0,
+            float("-inf")
+        )
+
+        # Convert attention scores into probability distributions.
+        weights = F.softmax(scores, dim=-1)
+
+        # Apply dropout to the attention weights.
+        weights = self.dropout(weights)
+
+        # Compute the weighted sum of the value vectors.
+        # Output shape: (B, T, head_size)
+        out = weights @ v
+
+        return out
 
 # Step 9 - MultiHeadAttention (not yet solved)
 # TODO: implement

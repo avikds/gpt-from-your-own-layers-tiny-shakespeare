@@ -439,6 +439,67 @@ class Block(nn.Module):
 
         return x
 
-# Step 13 - GPTLanguageModel (not yet solved)
-# TODO: implement
+# Step 13 - GPTLanguageModel
+class GPTLanguageModel(nn.Module):
+    def __init__(self, vocab_size, n_embd, n_head, n_layer, block_size, dropout=0.0):
+        """Token and position embeddings, n_layer Blocks, a final LayerNorm and a linear head."""
+        super().__init__()
+
+        # Convert token IDs into learnable embedding vectors.
+        self.token_embedding_table = nn.Embedding(vocab_size, n_embd)
+
+        # Learnable positional embeddings for positions 0 to block_size - 1.
+        self.position_embedding_table = nn.Embedding(block_size, n_embd)
+
+        # Stack n_layer Transformer Blocks.
+        self.blocks = nn.Sequential(*[
+            Block(n_embd, n_head, block_size, dropout)
+            for _ in range(n_layer)
+        ])
+
+        # Final Layer Normalization.
+        self.ln_f = LayerNorm(n_embd)
+
+        # Project the final embeddings into vocabulary-sized logits.
+        self.lm_head = nn.Linear(n_embd, vocab_size)
+
+    def forward(self, idx, targets=None):
+        """Return (logits of shape (B, T, vocab_size), loss or None), like the bigram model."""
+
+        # Get batch size and sequence length.
+        B, T = idx.shape
+
+        # Generate token embeddings.
+        tok_emb = self.token_embedding_table(idx)
+
+        # Generate positional embeddings for positions 0 through T - 1.
+        positions = torch.arange(T, device=idx.device)
+        pos_emb = self.position_embedding_table(positions)
+
+        # Combine token and positional embeddings.
+        x = tok_emb + pos_emb
+
+        # Pass the input through all Transformer Blocks.
+        x = self.blocks(x)
+
+        # Apply final Layer Normalization.
+        x = self.ln_f(x)
+
+        # Generate logits over the vocabulary.
+        logits = self.lm_head(x)
+
+        # Calculate cross-entropy loss when targets are provided.
+        loss = None
+
+        if targets is not None:
+            # Get the dimensions of the logits.
+            B, T, C = logits.shape
+
+            # Flatten logits and targets for cross-entropy calculation.
+            logits_flat = logits.reshape(B * T, C)
+            targets_flat = targets.reshape(B * T)
+
+            loss = F.cross_entropy(logits_flat, targets_flat)
+
+        return logits, loss
 

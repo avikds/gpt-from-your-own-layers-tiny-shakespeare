@@ -347,8 +347,32 @@ class MultiHeadAttention(nn.Module):
 
         return out
 
-# Step 10 - FeedForward (not yet solved)
-# TODO: implement
+# Step 10 - FeedForward
+class FeedForward(nn.Module):
+    def __init__(self, n_embd, dropout=0.0):
+        """Linear(n_embd, 4*n_embd) -> ReLU -> Linear(4*n_embd, n_embd) -> Dropout."""
+        super().__init__()
+
+        # Define the position-wise feed-forward network.
+        self.net = nn.Sequential(
+            # Expand the embedding dimension by a factor of 4.
+            nn.Linear(n_embd, 4 * n_embd),
+
+            # Apply ReLU activation.
+            nn.ReLU(),
+
+            # Project back to the original embedding dimension.
+            nn.Linear(4 * n_embd, n_embd),
+
+            # Apply dropout for regularization.
+            nn.Dropout(dropout)
+        )
+
+    def forward(self, x):
+        """Return the feed-forward transformation with the same shape as x."""
+
+        # Apply the feed-forward network to the input.
+        return self.net(x)
 
 # Step 11 - LayerNorm (not yet solved)
 # TODO: implement

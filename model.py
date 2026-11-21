@@ -143,8 +143,43 @@ def generate(model, idx, max_new_tokens, block_size, generator=None):
 
     return idx
 
-# Step 5 - train (not yet solved)
-# TODO: implement
+# Step 5 - train
+def train(model, data, block_size, batch_size, steps, lr=1e-3, generator=None):
+    """AdamW training on random batches; returns each step's loss as a float."""
+
+    # Initialize the AdamW optimizer once before training.
+    optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
+
+    # Store the training loss from each optimization step.
+    losses = []
+
+    # Perform the specified number of training steps.
+    for step in range(steps):
+
+        # Sample a random batch of input sequences and their targets.
+        xb, yb = get_batch(
+            data,
+            block_size,
+            batch_size,
+            generator=generator
+        )
+
+        # Forward pass: calculate predictions and cross-entropy loss.
+        logits, loss = model(xb, yb)
+
+        # Clear previously accumulated gradients.
+        optimizer.zero_grad(set_to_none=True)
+
+        # Backpropagate the loss to calculate gradients.
+        loss.backward()
+
+        # Update model parameters using AdamW.
+        optimizer.step()
+
+        # Record the current loss as a Python float.
+        losses.append(float(loss.item()))
+
+    return losses
 
 # Step 6 - estimate_loss (not yet solved)
 # TODO: implement

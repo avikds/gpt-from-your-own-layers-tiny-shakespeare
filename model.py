@@ -181,8 +181,48 @@ def train(model, data, block_size, batch_size, steps, lr=1e-3, generator=None):
 
     return losses
 
-# Step 6 - estimate_loss (not yet solved)
-# TODO: implement
+# Step 6 - estimate_loss
+def estimate_loss(model, splits, block_size, batch_size, eval_iters, generator=None):
+    """Mean loss over eval_iters batches for each named split, in evaluation mode, as floats."""
+
+    # Switch the model to evaluation mode.
+    model.eval()
+
+    # Dictionary to store the average loss for each split.
+    out = {}
+
+    # Disable gradient tracking during evaluation.
+    with torch.no_grad():
+
+        # Evaluate each dataset split in dictionary order.
+        for split, data in splits.items():
+
+            total_loss = 0.0
+
+            # Calculate loss over eval_iters random batches.
+            for _ in range(eval_iters):
+
+                # Sample a batch of inputs and next-token targets.
+                xb, yb = get_batch(
+                    data,
+                    block_size,
+                    batch_size,
+                    generator=generator
+                )
+
+                # Perform a forward pass and calculate the loss.
+                logits, loss = model(xb, yb)
+
+                # Accumulate the batch loss.
+                total_loss += loss.item()
+
+            # Store the average loss as a Python float.
+            out[split] = total_loss / eval_iters
+
+    # Restore the model to training mode.
+    model.train()
+
+    return out
 
 # Step 7 - average_past (not yet solved)
 # TODO: implement

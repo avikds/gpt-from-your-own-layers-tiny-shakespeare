@@ -51,8 +51,28 @@ def load_data(train_frac=0.9):
 
     return chars, encode, decode, train_data, val_data
 
-# Step 2 - get_batch (not yet solved)
-# TODO: implement
+# Step 2 - get_batch
+def get_batch(data, block_size, batch_size, generator=None):
+    """Random (batch_size, block_size) chunks x of data and their next-token targets y."""
+
+    # Generate random starting positions for each chunk.
+    ix = torch.randint(
+        len(data) - block_size,
+        (batch_size,),
+        generator=generator
+    )
+
+    # Extract input sequences of length block_size.
+    x = torch.stack([
+        data[int(i):int(i) + block_size] for i in ix
+    ])
+
+    # Extract target sequences shifted one character ahead.
+    y = torch.stack([
+        data[int(i) + 1:int(i) + block_size + 1] for i in ix
+    ])
+
+    return x, y
 
 # Step 3 - BigramLanguageModel (not yet solved)
 # TODO: implement

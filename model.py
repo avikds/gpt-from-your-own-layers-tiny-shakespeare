@@ -224,8 +224,35 @@ def estimate_loss(model, splits, block_size, batch_size, eval_iters, generator=N
 
     return out
 
-# Step 7 - average_past (not yet solved)
-# TODO: implement
+# Step 7 - average_past
+def average_past(x):
+    """Position t of the output is the mean of x[:, :t + 1], computed with a masked softmax and a matrix multiply."""
+
+    # Get the sequence length from the input tensor.
+    B, T, C = x.shape
+
+    # Initialize a (T, T) weight matrix with zeros.
+    weights = x.new_zeros((T, T))
+
+    # Create a lower-triangular causal mask.
+    # Each position can attend only to itself and previous positions.
+    causal_mask = torch.tril(
+        torch.ones((T, T), device=x.device, dtype=torch.bool)
+    )
+
+    # Set positions above the diagonal to negative infinity.
+    # These positions will receive zero probability after softmax.
+    weights = weights.masked_fill(~causal_mask, float("-inf"))
+
+    # Apply softmax along the last dimension.
+    # All allowed positions receive equal weights.
+    weights = F.softmax(weights, dim=-1)
+
+    # Compute the weighted average using matrix multiplication.
+    # Output shape: (B, T, C)
+    out = weights @ x
+
+    return out
 
 # Step 8 - Head (not yet solved)
 # TODO: implement

@@ -402,8 +402,42 @@ class LayerNorm(nn.Module):
         # Apply learnable scaling and shifting.
         return self.gamma * xhat + self.beta
 
-# Step 12 - Block (not yet solved)
-# TODO: implement
+# Step 12 - Block
+class Block(nn.Module):
+    def __init__(self, n_embd, n_head, block_size, dropout=0.0):
+        """Multi-head attention, feed-forward layer, and two layer norms."""
+        super().__init__()
+
+        # Calculate the embedding dimension allocated to each attention head.
+        head_size = n_embd // n_head
+
+        # Multi-head self-attention layer.
+        self.sa = MultiHeadAttention(
+            n_head,
+            head_size,
+            n_embd,
+            block_size,
+            dropout
+        )
+
+        # Position-wise feed-forward network.
+        self.ffwd = FeedForward(n_embd, dropout)
+
+        # Layer normalization before attention and feed-forward operations.
+        self.ln1 = LayerNorm(n_embd)
+        self.ln2 = LayerNorm(n_embd)
+
+    def forward(self, x):
+        """Pre-norm residual: x + sa(ln1(x)), then x + ffwd(ln2(x))."""
+
+        # First sub-layer: pre-normalized self-attention with a residual connection.
+        x = x + self.sa(self.ln1(x))
+
+        # Second sub-layer: pre-normalized feed-forward network
+        # with another residual connection.
+        x = x + self.ffwd(self.ln2(x))
+
+        return x
 
 # Step 13 - GPTLanguageModel (not yet solved)
 # TODO: implement

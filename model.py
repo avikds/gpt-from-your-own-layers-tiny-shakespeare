@@ -310,8 +310,42 @@ class Head(nn.Module):
 
         return out
 
-# Step 9 - MultiHeadAttention (not yet solved)
-# TODO: implement
+# Step 9 - MultiHeadAttention
+class MultiHeadAttention(nn.Module):
+    def __init__(self, num_heads, head_size, n_embd, block_size, dropout=0.0):
+        """num_heads Heads in an nn.ModuleList, a projection back to n_embd, and dropout."""
+        super().__init__()
+
+        # Create multiple independent self-attention heads.
+        self.heads = nn.ModuleList([
+            Head(n_embd, head_size, block_size, dropout)
+            for _ in range(num_heads)
+        ])
+
+        # Project the concatenated head outputs back to n_embd dimensions.
+        self.proj = nn.Linear(head_size * num_heads, n_embd)
+
+        # Apply dropout after the output projection.
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self, x):
+        """Concatenate the heads' outputs, project, dropout."""
+
+        # Run every attention head on the same input.
+        # Concatenate their outputs along the embedding dimension.
+        out = torch.cat(
+            [head(x) for head in self.heads],
+            dim=-1
+        )
+
+        # Project the concatenated output back to the original
+        # embedding dimension.
+        out = self.proj(out)
+
+        # Apply dropout to the projected output.
+        out = self.dropout(out)
+
+        return out
 
 # Step 10 - FeedForward (not yet solved)
 # TODO: implement
